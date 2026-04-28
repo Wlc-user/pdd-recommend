@@ -19,7 +19,7 @@ class RecResponse(BaseModel):
 @app.on_event('startup')
 async def startup():
     global _rec, _updater, _canary
-    cache = 'data/cache.pkl'
+    cache = '../data/cache.pkl'
     with open(cache, 'rb') as f: users, items, inter = pickle.load(f)
     fp = FeatureProcessor(); uf = fp.encode_users(users); itf = fp.encode_items(items)
     model = DSSM(uf.shape[1], itf.shape[1], Config.EMBEDDING_DIM)
