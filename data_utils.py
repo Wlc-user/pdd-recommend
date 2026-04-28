@@ -46,7 +46,7 @@ class DataGenerator:
         rows = []
         for _ in range(n):
             u = users.iloc[np.random.randint(0, len(users))]
-            cand = items[items['cat'].isin(u['interests'].split('|'))] if np.random.random() < 0.7 else items
+            cand = items[items['cat'].isin(u['interests'].split('|'))] if np.random.random() < 0.6 else items
             it = cand.iloc[np.random.randint(0, len(cand))]
             b = np.random.choice(['view']*30 + ['click']*25 + ['collect']*15 + ['cart']*15 + ['order']*10 + ['group_buy']*5)
             rows.append({'user_id': u['user_id'], 'item_id': it['item_id'], 'behavior': b,
@@ -91,10 +91,11 @@ class FeatureProcessor:
         feats.append(df[['rate', 'comm']].values)
         feats.append(self.mm.fit_transform(df[['store']]))
         feats.append(self.scaler.fit_transform(df[['delivery']]))
+        tag_to_idx = {t: i for i, t in enumerate(Config.TAGS)}
         m = np.zeros((len(df), len(Config.TAGS)))
-        for i, row in df.iterrows():
-            for x in row['tags'].split('|'):
-                if x in Config.TAGS:
-                    m[i, Config.TAGS.index(x)] = 1
+        for idx, tags in enumerate(df['tags'].str.split('|')):
+            for t in tags:
+                if t in tag_to_idx:
+                    m[idx, tag_to_idx[t]] = 1
         feats.append(m)
         return np.hstack(feats).astype(np.float32)

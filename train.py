@@ -1,4 +1,5 @@
 # train.py
+import pickle, time, os
 import torch, os, time, pickle, numpy as np
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
@@ -7,6 +8,7 @@ from data_utils import DataGenerator, FeatureProcessor
 from model import DSSM, FocalLoss
 from engine import Recommender
 import matplotlib
+from model import DSSM, FocalLoss, InfoNCELoss
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
@@ -26,14 +28,16 @@ class RecDataset(Dataset):
 
 def train_model(model, dl, epochs):
     opt = torch.optim.Adam(model.parameters(), lr=Config.LR)
-    loss_fn = FocalLoss(Config.FOCAL_ALPHA, Config.FOCAL_GAMMA)
+    loss_fn = torch.nn.BCELoss()
     losses = []
     for e in range(epochs):
         model.train(); tl = 0
         for u, i, l in dl:
             opt.zero_grad()
-            loss = loss_fn(model(u, i).squeeze(), l)
-            loss.backward(); opt.step()
+            pred = model(u, i).squeeze()
+            loss = loss_fn(pred, l)
+            loss.backward()
+            opt.step()
             tl += loss.item()
         losses.append(tl / len(dl))
         if (e + 1) % 5 == 0:
@@ -168,23 +172,22 @@ def plot_pipeline(save_path='reports/pipeline.png'):
     ax.set_title('工业落地全链路', fontsize=16, fontweight='bold', pad=20)
     plt.savefig(save_path, dpi=150, bbox_inches='tight'); plt.close()
     print(f'工业链路图: {save_path}')
-
 if __name__ == '__main__':
     os.makedirs('reports', exist_ok=True)
     print('=' * 60)
-    print('拼多多推荐系统 — Focal Loss + Faiss IVF')  # 修复了中文乱码
+    print('拼多多推荐系统 — Focal Loss + Faiss IVF')
     print('=' * 60)
 
     # 数据
-    gen = DataGenerator()
-    users, items, inter = gen.generate()
+    with open('data/cache.pkl', 'rb') as f:
+        users, items, inter = pickle.load(f)
     fp = FeatureProcessor()
     uf = fp.encode_users(users)
     itf = fp.encode_items(items)
     print(f'特征: 用户{uf.shape} 商品{itf.shape}')
 
     # 训练
-    train_df, _ = train_test_split(inter, test_size=0.2, random_state=42)
+    train_df, val_df = train_test_split(inter, test_size=0.2, random_state=42)
     ds = RecDataset(train_df, uf, itf)
     dl = DataLoader(ds, batch_size=Config.BATCH_SIZE, shuffle=True)
     model = DSSM(uf.shape[1], itf.shape[1], Config.EMBEDDING_DIM)
@@ -199,23 +202,43 @@ if __name__ == '__main__':
     print(f'冷启动推荐: {rec.recommend_cold(10)}')
 
     # 压测
-    # 把这整段替换
     latencies = []
     uids = np.random.randint(0, Config.N_USERS, 500)
     t0 = time.time()
     for uid in uids:
         rec.recommend_online(uid)
     elapsed = time.time() - t0
-    latencies = [elapsed / 500 * 1000] * 500  # 平均延迟
     print(f'\n压测: Avg={elapsed/500*1000:.1f}ms | QPS={500/elapsed:.0f}')
+
+    # ========== 离线评估 ==========
+    print('\n📊 离线评估:')
+    model.eval()
+    val_sample = val_df.sample(min(500, len(val_df)))
+    val_users = val_sample['user_id'].values
+    val_items = val_sample['item_id'].values
+    val_labels = val_sample['label'].values
+    
+    with torch.no_grad():
+        preds = model(torch.tensor(uf[val_users]), torch.tensor(itf[val_items])).squeeze().cpu().numpy()
+    
+    from sklearn.metrics import roc_auc_score
+    auc = roc_auc_score(val_labels, preds)
+    
+    # HitRate@10
+    hits = 0; total = 0
+    for uid in np.unique(val_users)[:100]:
+        user_pos = set(val_df[(val_df['user_id'] == uid) & (val_df['label'] == 1)]['item_id'].values)
+        if len(user_pos) == 0: continue
+        recs = rec.recommend_online(uid, 10)
+        if user_pos & set(recs): hits += 1
+        total += 1
+    
+    hr = hits / total if total > 0 else 0
+    print(f'   AUC: {auc:.4f}')
+    print(f'   HitRate@10: {hr:.4f} ({hits}/{total})')
+
     # 出图
     print('\n生成报告...')
     plot_loss(losses)
-    plot_latency(latencies)
+    plot_latency([elapsed/500*1000]*500)
     print('✅ 完成! 报告在 reports/')
-    print('\n生成报告...')
-    plot_loss(losses)
-    plot_latency(latencies)
-    plot_model_architecture()      # 新增
-    plot_recall_strategy()         # 新增
-    plot_pipeline()                # 新增

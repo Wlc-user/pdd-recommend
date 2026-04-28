@@ -43,3 +43,13 @@ class DSSM(nn.Module):
 
     def forward(self, u, i):
         return torch.sigmoid((self.ut(u) * self.it(i)).sum(dim=1))
+class InfoNCELoss(nn.Module):
+    """InfoNCE：batch内对比学习"""
+    def __init__(self, temperature=0.1):
+        super().__init__()
+        self.t = temperature
+
+    def forward(self, u, i, l):
+        sim = torch.matmul(u, i.T) / self.t
+        labels = torch.arange(len(u), device=u.device)
+        return nn.functional.cross_entropy(sim, labels)    
