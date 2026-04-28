@@ -3,6 +3,11 @@ from datetime import datetime
 
 # 读取全量评分（100万条）
 r = pd.read_csv('data/ml-1m/ratings.dat', sep='::', names=['user_id','item_id','rating','timestamp'], engine='python')
+# 原来
+r['label'] = (r['rating'] >= 4).astype(int)
+
+# 改成：4-5分=正样本，1-2分=负样本，3分=丢弃
+r = r[r['rating'] != 3]
 r['label'] = (r['rating'] >= 4).astype(int)
 r['behavior'] = r['label'].map({1:'order',0:'view'})
 r['ts'] = datetime.now().strftime('%Y-%m-%d')
