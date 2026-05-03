@@ -101,7 +101,6 @@ curl http://localhost:8000/health
 
 浏览器打开 `http://localhost:8000/docs` 查看 Swagger 文档。
 <img width="1062" height="1466" alt="_cgi-bin_mmwebwx-bin_webwxgetmsgimg__ MsgID=8565613301315621023 skey=@crypt_7e1f58f9_cb69f5b2f00333c0e4570728194b6c7e mmweb_appid=wx_webfilehelper" src="https://github.com/user-attachments/assets/f5cc1360-ffbf-4f1c-87b6-5ba1e98185f8" />
-<img width="1062" height="1466" alt="_cgi-bin_mmwebwx-bin_webwxgetmsgimg__ MsgID=8565613301315621023 skey=@crypt_7e1f58f9_cb69f5b2f00333c0e4570728194b6c7e mmweb_appid=wx_webfilehelper" src="https://github.com/user-attachments/assets/764af4f8-d14a-422f-8e3b-dc9c285ca5e5" />
 
 ## 📈 面试要点
 
