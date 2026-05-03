@@ -1,11 +1,13 @@
 ```powershell
+<img width="1062" height="1466" alt="_cgi-bin_mmwebwx-bin_webwxgetmsgimg__ MsgID=8565613301315621023 skey=@crypt_7e1f58f9_cb69f5b2f00333c0e4570728194b6c7e mmweb_appid=wx_webfilehelper" src="https://github.com/user-attachments/assets/f5cc1360-ffbf-4f1c-87b6-5ba1e98185f8" />
+
 @"
 # 🛒 电商推荐系统 — DSSM 双塔 + Faiss IVF + 生产级落地
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
 [![Faiss](https://img.shields.io/badge/Faiss-1.7+-green.svg)](https://github.com/facebookresearch/faiss)
-![Uploading _cgi-bin_mmwebwx-bin_webwxgetmsgimg__&MsgID=8565613301315621023&skey=@crypt_7e1f58f9_cb69f5b2f00333c0e4570728194b6c7e&mmweb_appid=wx_webfilehelper.jpg…]()
+
 
 > 参考拼多多电商场景，从零搭建的工业级推荐系统。DSSM 双塔召回 + Faiss IVF 向量检索 + 五路多级召回 + Focal Loss + 增量学习 + 灰度发布，单机 QPS 突破 5 万。
 
